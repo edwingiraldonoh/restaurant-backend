@@ -3,7 +3,7 @@ import { getKitchenOrders } from '../controllers/kitchenController';
 
 const router = Router();
 
-// GET /kitchen/orders - Obtener pedidos en cocina
+// GET /kitchen/orders - Obtener todos los pedidos en cocina
 router.get('/orders', getKitchenOrders);
 
 export default router;
