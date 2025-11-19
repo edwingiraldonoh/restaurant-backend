@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      ORDER_SERVICE_URL: http://order-service:3001
+      KITCHEN_SERVICE_URL: http://kitchen-service:3002
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      order-service:
+        condition: service_started
+      kitchen-service:
+        condition: service_started
+    restart: unless-stopped
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      MONGODB_URL: mongodb://mongodb:27017/orders
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  kitchen-service:
+    build: ./kitchen-service
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      MONGODB_URL: mongodb://mongodb:27017/kitchen
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
