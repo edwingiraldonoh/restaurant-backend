@@ -4,9 +4,28 @@
   "description": "Sistema de procesamiento de pedidos para restaurante con arquitectura de microservicios.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:all": "cd order-service && npm install && cd ../kitchen-service && npm install && cd ../notification-service && npm install && cd ../api-gateway && npm install",
+    "services:start": "powershell -ExecutionPolicy Bypass -File ./start-services.ps1",
+    "services:stop": "powershell -ExecutionPolicy Bypass -File ./stop-services.ps1",
+    "dev:order": "cd order-service && npm run dev",
+    "dev:kitchen": "cd kitchen-service && npm run dev",
+    "dev:notification": "cd notification-service && npm run dev",
+    "dev:gateway": "cd api-gateway && npm run dev",
+    "docker:up": "docker-compose up",
+    "docker:up:build": "docker-compose up --build",
+    "docker:up:detached": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "test": "cd order-service && npm test",
+    "test:order": "cd order-service && npm test",
+    "test:watch": "cd order-service && npm run test:watch",
+    "test:all": "npm run test:order"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "express": "^5.1.0"
+  }
 }
