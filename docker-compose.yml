@@ -1,20 +1,6 @@
 version: '3.8'
 
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   mongodb:
     image: mongo:latest
     ports:
@@ -36,12 +22,8 @@ services:
       ORDER_SERVICE_URL: http://order-service:3001
       KITCHEN_SERVICE_URL: http://kitchen-service:3002
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      order-service:
-        condition: service_started
-      kitchen-service:
-        condition: service_started
+      - order-service
+      - kitchen-service
     restart: unless-stopped
 
   order-service:
@@ -51,13 +33,10 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_URL: ${CLOUDAMQP_URL} 
       MONGODB_URL: mongodb://mongodb:27017/orders
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
+      - mongodb
     restart: unless-stopped
 
   kitchen-service:
@@ -67,13 +46,10 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3002
-      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_URL: ${CLOUDAMQP_URL} 
       MONGODB_URL: mongodb://mongodb:27017/kitchen
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
+      - mongodb
     restart: unless-stopped
 
   notification-service:
@@ -83,12 +59,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3003
-      RABBITMQ_URL: amqp://rabbitmq:5672
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+      RABBITMQ_URL: ${CLOUDAMQP_URL}
     restart: unless-stopped
 
 volumes:
   mongodb_data:
-
