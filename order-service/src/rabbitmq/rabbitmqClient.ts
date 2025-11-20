@@ -1,7 +1,7 @@
-import amqp, { Connection, Channel } from 'amqplib';
+import { connect, Connection, Channel } from 'amqplib';
 
 export class RabbitMQClient {
-  private connection: Connection | null = null;
+  private connection: Awaited<ReturnType<typeof connect>> | null = null;
   private channel: Channel | null = null;
   private readonly url: string;
   private readonly exchangeName: string = 'order_events';
@@ -16,7 +16,7 @@ export class RabbitMQClient {
   async connect(): Promise<void> {
     try {
       console.log('🔄 Conectando a RabbitMQ...');
-      this.connection = await amqp.connect(this.url);
+      this.connection = await connect(this.url);
       this.channel = await this.connection.createChannel();
       
       // Crear exchange de tipo topic para eventos de pedidos
