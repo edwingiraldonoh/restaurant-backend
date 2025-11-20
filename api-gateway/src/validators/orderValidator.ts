@@ -4,7 +4,6 @@ import { CreateOrderRequest } from '../types';
 
 /**
  * Validador para pedidos
- * Aplica Single Responsibility Principle
  */
 export class OrderValidator {
   /**
@@ -15,26 +14,26 @@ export class OrderValidator {
       return { valid: false, message: 'El cuerpo de la petición está vacío' };
     }
 
-    const { orderItems, customerName, customerEmail } = req.body as CreateOrderRequest;
+    const { items, customerName, customerEmail } = req.body as CreateOrderRequest; // ← Cambiado a items
 
-    // Validar orderItems (items del pedido)
-    const orderItemsValidation = Validators.validateArray(orderItems, 'orderItems', 1);
-    if (!orderItemsValidation.valid) {
-      return orderItemsValidation;
+    // Validar items (items del pedido)
+    const itemsValidation = Validators.validateArray(items, 'items', 1); // ← Cambiado a items
+    if (!itemsValidation.valid) {
+      return itemsValidation;
     }
 
     // Validar que cada item tenga los campos requeridos
-    if (Array.isArray(orderItems)) {
-      for (let i = 0; i < orderItems.length; i++) {
-        const item = orderItems[i];
-        if (!item.dishName || typeof item.dishName !== 'string') {
-          return { valid: false, message: `orderItems[${i}].dishName es requerido y debe ser una cadena de texto` };
+    if (Array.isArray(items)) { // ← Cambiado a items
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (!item.name || typeof item.name !== 'string') { // ← Cambiado a name
+          return { valid: false, message: `items[${i}].name es requerido y debe ser una cadena de texto` };
         }
         if (!item.quantity || typeof item.quantity !== 'number' || item.quantity <= 0) {
-          return { valid: false, message: `orderItems[${i}].quantity es requerido y debe ser un número mayor a 0` };
+          return { valid: false, message: `items[${i}].quantity es requerido y debe ser un número mayor a 0` };
         }
-        if (!item.unitPrice || typeof item.unitPrice !== 'number' || item.unitPrice <= 0) {
-          return { valid: false, message: `orderItems[${i}].unitPrice es requerido y debe ser un número mayor a 0` };
+        if (!item.price || typeof item.price !== 'number' || item.price <= 0) { // ← Cambiado a price
+          return { valid: false, message: `items[${i}].price es requerido y debe ser un número mayor a 0` };
         }
       }
     }
@@ -65,4 +64,3 @@ export class OrderValidator {
     return { valid: true };
   }
 }
-

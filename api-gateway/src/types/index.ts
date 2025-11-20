@@ -13,20 +13,20 @@ export interface ServiceResponse<T = any> {
  * Request para crear un nuevo pedido
  */
 export interface CreateOrderRequest {
-  orderItems: OrderLineItem[];
+  items: OrderItem[];  // ← Cambiado de orderItems a items
   customerName: string;
   customerEmail: string;
   notes?: string;
 }
 
 /**
- * Item individual de un pedido (línea de pedido)
- * Representa un plato/producto del menú con su cantidad y precio
+ * Item individual de un pedido
  */
-export interface OrderLineItem {
-  dishName: string;
+export interface OrderItem {  // ← Cambiado de OrderLineItem a OrderItem
+  name: string;              // ← Cambiado de dishName a name
   quantity: number;
-  unitPrice: number;
+  price: number;             // ← Cambiado de unitPrice a price
+  notes?: string;
 }
 
 /**
@@ -34,7 +34,7 @@ export interface OrderLineItem {
  */
 export interface Order {
   id: string;
-  orderItems: OrderLineItem[];
+  items: OrderItem[];        // ← Cambiado de orderItems a items
   customerName: string;
   customerEmail: string;
   status: OrderStatus;
@@ -54,8 +54,7 @@ export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'can
 export interface KitchenOrder {
   id: string;
   orderId: string;
-  orderItems: OrderLineItem[];
+  items: OrderItem[];        // ← Cambiado de orderItems a items
   status: OrderStatus;
   createdAt: string;
 }
-
