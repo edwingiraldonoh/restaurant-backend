@@ -7,6 +7,7 @@ import { Notification, OrderEvent } from '../types';
  */
 class NotificationService {
   private clients: Response[] = [];
+  private notificationCounter = 0;
 
   // Agregar nuevo cliente SSE
   addClient(res: Response): void {
@@ -49,7 +50,7 @@ class NotificationService {
     };
 
     return {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${this.notificationCounter++}`,
       type: types[event.type],
       message: messages[event.type],
       orderId: event.orderId,
