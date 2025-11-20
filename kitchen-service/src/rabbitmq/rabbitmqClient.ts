@@ -5,17 +5,20 @@ export class RabbitMQClient {
   private channel: Channel | null = null;
   private readonly exchange: string;
   private readonly MAX_RETRIES = 3;
-  private url: string = '';
+  private url: string;
 
   constructor(exchange: string = 'orders_exchange') {
     this.exchange = exchange;
+    this.url = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
   }
 
-  async connect(url: string): Promise<void> {
-    this.url = url;
+  async connect(url?: string): Promise<void> {
+    if (url) {
+      this.url = url;
+    }
     
     try {
-      this.connection = await amqplib.connect(url);
+      this.connection = await amqplib.connect(this.url);
       this.channel = await this.connection.createChannel();
       
       await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
