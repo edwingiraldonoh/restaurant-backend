@@ -23,7 +23,14 @@ export const orderService = {
 };
 
 export const kitchenService = {
-  getKitchenOrders: () => kitchenServiceClient.get<KitchenOrder[]>('/api/kitchen/orders'),
+  getKitchenOrders: (status?: string) => {
+    const url = status 
+      ? `/api/kitchen/orders?status=${status}`
+      : '/api/kitchen/orders';
+    return kitchenServiceClient.get<KitchenOrder[]>(url);
+  },
+  getKitchenOrderById: (orderId: string) => 
+    kitchenServiceClient.get<KitchenOrder>(`/api/kitchen/orders/${orderId}`),
   startPreparing: (orderId: string) => 
     kitchenServiceClient.post(`/api/kitchen/orders/${orderId}/start-preparing`),
   markAsReady: (orderId: string) => 
