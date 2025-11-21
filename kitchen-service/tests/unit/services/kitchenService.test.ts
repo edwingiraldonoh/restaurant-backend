@@ -48,8 +48,16 @@ describe('KitchenService - Unit Tests', () => {
       expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
         'order.received',
         expect.objectContaining({
+          type: 'order.received',
           orderId: 'order-002',
-          status: 'RECEIVED'
+          userId: 'user-002',
+          status: 'RECEIVED',
+          timestamp: expect.any(String),
+          data: expect.objectContaining({
+            receivedAt: expect.any(Date),
+            estimatedTime: expect.any(Number),
+            items: expect.any(Array)
+          })
         })
       );
     });
@@ -90,7 +98,8 @@ describe('KitchenService - Unit Tests', () => {
         orderId: 'order-004',
         userId: 'user-004',
         items: [{ name: 'Salad', quantity: 1 }],
-        status: 'RECEIVED'
+        status: 'RECEIVED',
+        estimatedTime: 7 // Calcular: 5 + (1 * 2) = 7 minutos
       });
 
       await kitchenService.startPreparing('order-004');
@@ -98,9 +107,15 @@ describe('KitchenService - Unit Tests', () => {
       expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
         'order.preparing',
         expect.objectContaining({
+          type: 'order.preparing',
           orderId: 'order-004',
+          userId: 'user-004',
           status: 'PREPARING',
-          preparingAt: expect.any(Date)
+          timestamp: expect.any(String),
+          data: expect.objectContaining({
+            preparingAt: expect.any(Date),
+            estimatedTime: expect.anything() // Puede ser number o undefined
+          })
         })
       );
     });
@@ -154,9 +169,16 @@ describe('KitchenService - Unit Tests', () => {
       expect(mockRabbitMQ.publish).toHaveBeenCalledWith(
         'order.ready',
         expect.objectContaining({
+          type: 'order.ready',
           orderId: 'order-007',
+          userId: 'user-007',
           status: 'READY',
-          readyAt: expect.any(Date)
+          timestamp: expect.any(String),
+          data: expect.objectContaining({
+            readyAt: expect.any(Date),
+            receivedAt: expect.any(Date),
+            items: expect.any(Array)
+          })
         })
       );
     });

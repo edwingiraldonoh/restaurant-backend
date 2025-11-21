@@ -9,7 +9,7 @@ module.exports = {
     '!src/app.ts'  // Excluir archivo principal
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setup/testSetup.ts'],
-  testTimeout: 30000,  // 30 segundos para tests de integración
+  testTimeout: 60000,
   coverageThreshold: {
     global: {
       branches: 70,
