@@ -16,6 +16,8 @@ export interface IKitchenOrder extends Document {
   readyAt?: Date;
   estimatedTime?: number; // en minutos
   notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const KitchenOrderSchema = new Schema({
