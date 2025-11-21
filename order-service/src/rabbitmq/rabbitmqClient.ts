@@ -4,7 +4,7 @@ export class RabbitMQClient {
   private connection: Awaited<ReturnType<typeof connect>> | null = null;
   private channel: Channel | null = null;
   private readonly url: string;
-  private readonly exchangeName: string = 'order_events';
+  private readonly exchangeName: string = 'restaurant_orders';
 
   constructor(url?: string) {
     this.url = url || process.env.RABBITMQ_URL || 'amqp://localhost:5672';

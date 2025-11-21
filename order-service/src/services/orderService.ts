@@ -6,9 +6,14 @@ export class OrderService {
    * Crea un nuevo pedido
    * @param customerName - Nombre del cliente
    * @param items - Items del pedido
+   * @param customerEmail - Email del cliente (opcional)
    * @returns El pedido creado
    */
-  async createOrder(customerName: string, items: OrderItem[]): Promise<IOrder> {
+  async createOrder(
+    customerName: string,
+    items: OrderItem[],
+    customerEmail?: string
+  ): Promise<IOrder> {
     try {
       // Generar número de pedido único
       const orderNumber = await this.generateOrderNumber();
@@ -27,16 +32,30 @@ export class OrderService {
       // Guardar en MongoDB
       const savedOrder = await order.save();
 
-      // Publicar evento order.created a RabbitMQ
-      await rabbitMQClient.publishEvent('order.created', {
+      // Publicar evento order.created a RabbitMQ con estructura enriquecida
+      const eventData = {
+        type: 'order.created',
         orderId: savedOrder._id.toString(),
+        userId: savedOrder._id.toString(), // Usamos el orderId como identificador del usuario por ahora
         orderNumber: savedOrder.orderNumber,
         customerName: savedOrder.customerName,
-        items: savedOrder.items,
-        total: savedOrder.total,
+        customerEmail,
+        items: savedOrder.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totalAmount: savedOrder.total,
         status: savedOrder.status,
-        createdAt: savedOrder.createdAt
-      });
+        timestamp: new Date().toISOString(),
+        createdAt: savedOrder.createdAt.toISOString(),
+        data: {
+          total: savedOrder.total,
+          createdAt: savedOrder.createdAt
+        }
+      };
+
+      await rabbitMQClient.publishEvent('order.created', eventData);
 
       console.log(`✅ Pedido creado: ${savedOrder.orderNumber}`);
 

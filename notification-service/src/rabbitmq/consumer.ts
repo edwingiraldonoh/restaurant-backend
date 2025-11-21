@@ -9,7 +9,7 @@ import { OrderEvent } from '../types';
 class RabbitMQConsumer {
   private connection: amqp.Connection | null = null;
   private channel: amqp.Channel | null = null;
-  private readonly EXCHANGE = 'orders';
+  private readonly EXCHANGE = 'restaurant_orders';
   private readonly QUEUE = 'notifications';
 
   async connect(): Promise<void> {
@@ -26,6 +26,7 @@ class RabbitMQConsumer {
 
       // Binding: escuchar ambos eventos
       await this.bindQueue('order.created');
+      await this.bindQueue('order.received');
       await this.bindQueue('order.ready');
 
       // Consumir mensajes
@@ -120,7 +121,37 @@ class RabbitMQConsumer {
   // Procesar mensaje recibido
   private handleMessage(content: string): void {
     try {
-      const event: OrderEvent = JSON.parse(content);
+      const rawEvent = JSON.parse(content);
+      let event: OrderEvent | null = null;
+
+      if (rawEvent.type && rawEvent.orderId) {
+        event = {
+          type: rawEvent.type as OrderEvent['type'],
+          orderId: rawEvent.orderId,
+          timestamp: rawEvent.timestamp ? new Date(rawEvent.timestamp) : new Date(),
+          data: rawEvent.data || rawEvent
+        };
+      } else if (rawEvent.orderId) {
+        let inferredType: OrderEvent['type'] = 'order.created';
+        if (rawEvent.status === 'READY' || rawEvent.readyAt) {
+          inferredType = 'order.ready';
+        } else if (rawEvent.status === 'RECEIVED' || rawEvent.receivedAt) {
+          inferredType = 'order.received';
+        }
+
+        event = {
+          type: inferredType,
+          orderId: rawEvent.orderId,
+          timestamp: rawEvent.timestamp ? new Date(rawEvent.timestamp) : new Date(),
+          data: rawEvent
+        };
+      }
+
+      if (!event) {
+        console.warn('⚠️ Evento con formato desconocido:', rawEvent);
+        return;
+      }
+
       console.log(`📨 Evento recibido: ${event.type} - Order #${event.orderId}`);
       
       // Delegar al servicio de notificaciones

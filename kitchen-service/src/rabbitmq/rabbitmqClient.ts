@@ -7,7 +7,7 @@ export class RabbitMQClient {
   private readonly MAX_RETRIES = 3;
   private url: string;
 
-  constructor(exchange: string = 'orders_exchange') {
+  constructor(exchange: string = 'restaurant_orders') {
     this.exchange = exchange;
     this.url = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
   }
@@ -91,17 +91,34 @@ export class RabbitMQClient {
     }
     
     try {
-      await this.channel.assertQueue(queue, { 
-        durable: true,
-        arguments: {
-          'x-dead-letter-exchange': `${this.exchange}_dlx`
+      let queueName = queue;
+
+      try {
+        await this.channel.assertQueue(queueName, { 
+          durable: true,
+          arguments: {
+            'x-dead-letter-exchange': `${this.exchange}_dlx`
+          }
+        });
+      } catch (assertError: any) {
+        if (assertError.code === 406) {
+          console.warn(`⚠️ Queue ${queueName} exists with different arguments. Using alternative queue name.`);
+          queueName = `${queue}-v2`;
+          await this.channel.assertQueue(queueName, { 
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': `${this.exchange}_dlx`
+            }
+          });
+        } else {
+          throw assertError;
         }
-      });
-      
-      await this.channel.bindQueue(queue, this.exchange, routingKey);
+      }
+
+      await this.channel.bindQueue(queueName, this.exchange, routingKey);
       
       await this.channel.consume(
-        queue, 
+        queueName, 
         async (msg: ConsumeMessage | null) => {
           if (!msg) return;
           
@@ -150,7 +167,7 @@ export class RabbitMQClient {
         { noAck: false }
       );
       
-      console.log(`👂 Listening to: ${routingKey}`);
+      console.log(`👂 Listening to: ${routingKey} (queue: ${queueName})`);
       
     } catch (error) {
       console.error(`❌ Error setting up consumer for ${queue}:`, error);

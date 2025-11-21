@@ -3,7 +3,7 @@ import { RabbitMQClient } from '../rabbitmq/rabbitmqClient';
 
 export interface OrderCreatedEvent {
   orderId: string;
-  userId: string;
+  userId?: string;
   customerName?: string;
   customerEmail?: string;
   items: Array<{
@@ -12,6 +12,9 @@ export interface OrderCreatedEvent {
     price?: number;
   }>;
   notes?: string;
+  totalAmount?: number;
+  status?: string;
+  createdAt?: string;
 }
 
 export class KitchenService {
@@ -34,9 +37,11 @@ export class KitchenService {
       }
 
       // Crear orden en kitchen
+      const userId = orderData.userId || orderData.orderId;
+
       const kitchenOrder = new KitchenOrder({
         orderId: orderData.orderId,
-        userId: orderData.userId,
+        userId,
         customerName: orderData.customerName,
         customerEmail: orderData.customerEmail,
         items: orderData.items,
@@ -51,14 +56,18 @@ export class KitchenService {
 
       // Publicar evento order.received para notification-service
       await this.rabbitMQClient.publish('order.received', {
+        type: 'order.received',
         orderId: orderData.orderId,
-        userId: orderData.userId,
+        userId,
         customerName: orderData.customerName,
         customerEmail: orderData.customerEmail,
         status: 'RECEIVED',
-        receivedAt: kitchenOrder.receivedAt,
-        estimatedTime: kitchenOrder.estimatedTime,
-        items: orderData.items
+        timestamp: new Date().toISOString(),
+        data: {
+          receivedAt: kitchenOrder.receivedAt,
+          estimatedTime: kitchenOrder.estimatedTime,
+          items: orderData.items
+        }
       });
 
       console.log(`📤 Event published: order.received for ${orderData.orderId}`);
@@ -95,13 +104,17 @@ export class KitchenService {
 
       // Publicar evento order.preparing para notification-service
       await this.rabbitMQClient.publish('order.preparing', {
+        type: 'order.preparing',
         orderId: order.orderId,
         userId: order.userId,
         customerName: order.customerName,
         customerEmail: order.customerEmail,
         status: 'PREPARING',
-        preparingAt: order.preparingAt,
-        estimatedTime: order.estimatedTime
+        timestamp: new Date().toISOString(),
+        data: {
+          preparingAt: order.preparingAt,
+          estimatedTime: order.estimatedTime
+        }
       });
 
       console.log(`📤 Event published: order.preparing for ${orderId}`);
@@ -138,15 +151,19 @@ export class KitchenService {
 
       // Publicar evento order.ready para notification-service
       await this.rabbitMQClient.publish('order.ready', {
+        type: 'order.ready',
         orderId: order.orderId,
         userId: order.userId,
         customerName: order.customerName,
         customerEmail: order.customerEmail,
         status: 'READY',
-        readyAt: order.readyAt,
-        receivedAt: order.receivedAt,
-        preparingAt: order.preparingAt,
-        items: order.items
+        timestamp: new Date().toISOString(),
+        data: {
+          readyAt: order.readyAt,
+          receivedAt: order.receivedAt,
+          preparingAt: order.preparingAt,
+          items: order.items
+        }
       });
 
       console.log(`📤 Event published: order.ready for ${orderId}`);

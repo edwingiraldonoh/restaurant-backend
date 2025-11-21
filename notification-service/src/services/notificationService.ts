@@ -39,13 +39,15 @@ class NotificationService {
 
   // Crear notificación basada en tipo de evento
   private createNotification(event: OrderEvent): Notification {
-    const messages = {
+    const messages: Record<OrderEvent['type'], string> = {
       'order.created': `Pedido #${event.orderId} recibido correctamente`,
+      'order.received': `Pedido #${event.orderId} recibido en cocina`,
       'order.ready': `¡Tu pedido #${event.orderId} está listo para recoger!`
     };
 
     const types: Record<OrderEvent['type'], Notification['type']> = {
       'order.created': 'info',
+      'order.received': 'info',
       'order.ready': 'success'
     };
 

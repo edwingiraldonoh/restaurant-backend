@@ -8,7 +8,14 @@ export class OrderController {
    */
   async createOrder(req: Request, res: Response): Promise<void> {
     try {
-      const { customerName, items } = req.body;
+      const { customerName, customerEmail, items } = req.body;
+      if (customerEmail && typeof customerEmail !== 'string') {
+        res.status(400).json({
+          error: 'El email del cliente debe ser una cadena de texto válida'
+        });
+        return;
+      }
+
 
       // Validaciones
       if (!customerName || typeof customerName !== 'string' || customerName.trim() === '') {
@@ -41,7 +48,11 @@ export class OrderController {
         }
       }
 
-      const order = await orderService.createOrder(customerName.trim(), items as OrderItem[]);
+      const order = await orderService.createOrder(
+        customerName.trim(),
+        items as OrderItem[],
+        typeof customerEmail === 'string' ? customerEmail.trim() : undefined
+      );
 
       res.status(201).json({
         message: 'Pedido creado exitosamente',
