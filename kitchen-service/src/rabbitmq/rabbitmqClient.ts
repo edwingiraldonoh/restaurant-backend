@@ -16,25 +16,25 @@ export class RabbitMQClient {
     if (url) {
       this.url = url;
     }
-    
+
     try {
+      console.log('🔌 Attempting to connect to RabbitMQ...');
       this.connection = await amqplib.connect(this.url);
       this.channel = await this.connection.createChannel();
-      
+
       await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
       await this.channel.prefetch(1);
-      
+
       this.connection.on('error', (err: Error) => {
         console.error('❌ RabbitMQ connection error:', err);
       });
-      
+
       this.connection.on('close', () => {
         console.log('⚠️ RabbitMQ connection closed. Reconnecting...');
         this.reconnect();
       });
-      
+
       console.log('✅ Connected to RabbitMQ');
-      
     } catch (error) {
       console.error('❌ Failed to connect to RabbitMQ:', error);
       setTimeout(() => this.reconnect(), 5000);
@@ -52,32 +52,16 @@ export class RabbitMQClient {
 
   async publish(routingKey: string, message: any): Promise<void> {
     if (!this.channel) {
+      console.error('❌ Cannot publish message: Channel not initialized.');
       throw new Error('Channel not initialized. Call connect() first.');
     }
-    
+
     try {
       const messageBuffer = Buffer.from(JSON.stringify(message));
-      
-      const published = this.channel.publish(
-        this.exchange,
-        routingKey,
-        messageBuffer,
-        { 
-          persistent: true,
-          contentType: 'application/json',
-          timestamp: Date.now()
-        }
-      );
-      
-      if (!published) {
-        throw new Error('Failed to publish message - channel buffer full');
-      }
-      
-      console.log(`📤 Published: ${routingKey}`, message);
-      
+      await this.channel.publish(this.exchange, routingKey, messageBuffer);
+      console.log(`📤 Message published to ${routingKey}`);
     } catch (error) {
-      console.error(`❌ Error publishing to ${routingKey}:`, error);
-      throw error;
+      console.error('❌ Failed to publish message:', error);
     }
   }
 

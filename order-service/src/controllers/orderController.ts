@@ -81,16 +81,19 @@ export class OrderController {
   async getOrderById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
-      const order = await orderService.getOrderById(id);
-
+      let order = null;
+      // Verificar si es un ObjectId válido
+      if (/^[a-fA-F0-9]{24}$/.test(id)) {
+        order = await orderService.getOrderById(id);
+      } else {
+        order = await orderService.getOrderByNumber(id);
+      }
       if (!order) {
         res.status(404).json({ 
           error: 'Pedido no encontrado' 
         });
         return;
       }
-
       res.json({
         order: {
           id: order._id,
@@ -118,19 +121,22 @@ export class OrderController {
   async getOrderStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
-      const orderStatus = await orderService.getOrderStatus(id);
-
-      if (!orderStatus) {
+      let order = null;
+      // Verificar si es un ObjectId válido
+      if (/^[a-fA-F0-9]{24}$/.test(id)) {
+        order = await orderService.getOrderById(id);
+      } else {
+        order = await orderService.getOrderByNumber(id);
+      }
+      if (!order) {
         res.status(404).json({ 
           error: 'Pedido no encontrado' 
         });
         return;
       }
-
       res.json({
-        orderNumber: orderStatus.orderNumber,
-        status: orderStatus.status
+        orderNumber: order.orderNumber,
+        status: order.status
       });
     } catch (error: any) {
       console.error('Error en getOrderStatus:', error);

@@ -3,6 +3,7 @@ import cors from 'cors';
 import axios from 'axios';
 import orderRoutes from './routes/orderRoutes';
 import kitchenRoutes from './routes/kitchenRoutes';
+import adminRoutes from './routes/adminRoutes';
 import { config, validateConfig } from './config';
 
 // Validar configuración al iniciar
@@ -27,6 +28,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use('/orders', orderRoutes);
 app.use('/kitchen', kitchenRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/health', async (req: Request, res: Response) => {
   const healthStatus = {

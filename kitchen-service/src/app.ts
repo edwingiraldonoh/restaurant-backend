@@ -27,13 +27,15 @@ app.get('/health', (req, res) => {
 // Función principal de inicialización
 async function startServer() {
   try {
+    console.log('🚀 Starting Kitchen Service...');
+
     // 1. Conectar a MongoDB
     console.log('📦 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URL);
     console.log('✅ MongoDB connected');
 
     // 2. Inicializar RabbitMQ
-    console.log('🐰 Connecting to RabbitMQ...');
+    console.log('🐇 Connecting to RabbitMQ...');
     const rabbitMQClient = new RabbitMQClient();
     await rabbitMQClient.connect(RABBITMQ_URL);
     console.log('✅ RabbitMQ connected');
@@ -75,7 +77,6 @@ async function startServer() {
       await rabbitMQClient.close();
       process.exit(0);
     });
-
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
