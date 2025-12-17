@@ -157,7 +157,7 @@
 ---
 
 ## US-017: Crear nuevos usuarios (Admin)
-**Descripción:** Como Administrador, quiero crear cuentas para personal o clientes, para gestionar accesos centralizados.
+**Descripción:** Como Administrador, quiero crear cuentas para personal, para gestionar accesos centralizados.
 
 **Criterios de Aceptación:**
 1. Opción "Crear Nuevo Usuario" disponible en gestión de usuarios.
@@ -285,13 +285,11 @@
 
 ---
 
-## US-030: Exportar reportes a CSV estandarizado
-**Descripción:** Como Administrador, quiero descargar los datos de ventas en CSV, para importarlos en herramientas externas sin errores.
+## US-030: Exportar reportes a XLSX estandarizado
+**Descripción:** Como Administrador, quiero descargar los datos de ventas en XLSX, para importarlos en herramientas externas sin errores.
 
 **Criterios de Aceptación:**
-1. **Codificación:** UTF-8 con BOM (para compatibilidad Excel).
-2. **Formato:** Delimitador punto y coma (;). Encabezados obligatorios.
-3. **Archivo:** Nombre automático `reporte_ventas_YYYY-MM-DD.csv`.
+1. **Archivo:** Nombre automático `reporte_ventas_YYYY-MM-DD.xlsx`.
 
 ---
 
