@@ -1,4 +1,4 @@
-import { connect, Connection, Channel } from 'amqplib';
+import { connect, Channel } from 'amqplib';
 
 export class RabbitMQClient {
   private connection: Awaited<ReturnType<typeof connect>> | null = null;

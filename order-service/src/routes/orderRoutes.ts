@@ -9,6 +9,9 @@ router.post('/', (req, res) => orderController.createOrder(req, res));
 // GET /orders/:id - Obtener un pedido por ID
 router.get('/:id', (req, res) => orderController.getOrderById(req, res));
 
+// PUT /orders/:id - Modificar un pedido existente
+router.put('/:id', (req, res) => orderController.updateOrder(req, res));
+
 // GET /orders/:id/status - Consultar estado de un pedido
 router.get('/:id/status', (req, res) => orderController.getOrderStatus(req, res));
 

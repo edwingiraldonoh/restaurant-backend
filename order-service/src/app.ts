@@ -7,6 +7,8 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import adminRoutes from './routes/adminRoutes';
 import { orderService } from './services/orderService';
 import { OrderStatus } from './models/Order';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { logger } from './utils/logger';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -129,6 +131,12 @@ process.on('SIGINT', async () => {
   await rabbitMQClient.close();
   process.exit(0);
 });
+
+// Middleware de manejo de rutas no encontradas (debe ir después de todas las rutas)
+app.use(notFoundHandler);
+
+// Middleware de manejo de errores (debe ir al final)
+app.use(errorHandler);
 
 // Iniciar el servidor
 startServer();

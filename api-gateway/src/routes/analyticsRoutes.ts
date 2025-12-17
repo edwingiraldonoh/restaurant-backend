@@ -53,4 +53,33 @@ router.post('/admin/analytics/export', async (req: Request, res: Response) => {
   }
 });
 
+// Proxy para exportar analytics a XLSX
+// Implementa US-030: Exportar reportes a XLSX estandarizado
+router.post('/admin/analytics/export-xlsx', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(
+      `${ORDER_SERVICE_URL}/admin/analytics/export-xlsx`,
+      req.body,
+      { responseType: 'arraybuffer' }
+    );
+    
+    // Copiar headers relevantes
+    const contentDisposition = response.headers['content-disposition'];
+    if (contentDisposition) {
+      res.setHeader('Content-Disposition', contentDisposition);
+    }
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    
+    res.status(response.status).send(response.data);
+  } catch (error: any) {
+    console.error('Error exporting analytics to XLSX:', error.message);
+    res.status(error.response?.status || 500).json(
+      error.response?.data || { success: false, message: 'Error al exportar analytics a XLSX' }
+    );
+  }
+});
+
 export default router;

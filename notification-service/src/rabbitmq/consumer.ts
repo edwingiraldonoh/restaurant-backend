@@ -120,6 +120,7 @@ class RabbitMQConsumer {
   }
 
   // Procesar mensaje recibido
+  // eslint-disable-next-line complexity
   private handleMessage(content: string): void {
     try {
       const rawEvent = JSON.parse(content);

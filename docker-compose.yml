@@ -1,15 +1,5 @@
 
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
   mongodb:
     image: mongo:latest
     ports:
@@ -100,7 +90,22 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3004
-      MONGODB_URI: mongodb://mongodb:27017/restaurant
+      MONGODB_URL: mongodb://mongodb:27017/restaurant
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  firebase-admin-api:
+    build: ./firebase-admin-api
+    ports:
+      - "4001:4001"
+    environment:
+      NODE_ENV: development
+      PORT: 4001
+      API_KEY: ${ADMIN_API_KEY:-changeme}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/serviceAccountKey.json
+    volumes:
+      - ./firebase-admin-api/serviceAccountKey.json:/secrets/serviceAccountKey.json:ro
     depends_on:
       - mongodb
     restart: unless-stopped

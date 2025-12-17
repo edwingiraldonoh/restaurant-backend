@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAnalytics, exportAnalyticsCSV } from '../controllers/analyticsController';
+import { getAnalytics, exportAnalyticsCSV, exportAnalyticsXLSX } from '../controllers/analyticsController';
 
 const router = Router();
 
@@ -8,5 +8,8 @@ router.get('/admin/analytics', getAnalytics);
 
 // POST /admin/analytics/export - Exportar a CSV
 router.post('/admin/analytics/export', exportAnalyticsCSV);
+
+// POST /admin/analytics/export-xlsx - Exportar a XLSX
+router.post('/admin/analytics/export-xlsx', exportAnalyticsXLSX);
 
 export default router;
