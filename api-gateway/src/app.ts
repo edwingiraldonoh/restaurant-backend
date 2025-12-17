@@ -3,6 +3,8 @@ import cors from 'cors';
 import axios from 'axios';
 import orderRoutes from './routes/orderRoutes';
 import kitchenRoutes from './routes/kitchenRoutes';
+import reviewRoutes from './routes/reviewRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 import adminRoutes from './routes/adminRoutes';
 import { config, validateConfig } from './config';
 
@@ -28,6 +30,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use('/orders', orderRoutes);
 app.use('/kitchen', kitchenRoutes);
+app.use('/reviews', reviewRoutes);
+app.use('/', analyticsRoutes);
 app.use('/admin', adminRoutes);
 
 app.get('/health', async (req: Request, res: Response) => {

@@ -55,7 +55,13 @@ export class OrderService {
         }
       };
 
-      await rabbitMQClient.publishEvent('order.created', eventData);
+      // Intentar publicar evento, pero no fallar si RabbitMQ no está disponible
+      try {
+        await rabbitMQClient.publishEvent('order.created', eventData);
+        console.log(`📤 Evento order.created publicado`);
+      } catch (mqError) {
+        console.warn(`⚠️ No se pudo publicar evento a RabbitMQ (el pedido se creó correctamente):`, mqError instanceof Error ? mqError.message : mqError);
+      }
 
       console.log(`✅ Pedido creado: ${savedOrder.orderNumber}`);
 
@@ -125,25 +131,104 @@ export class OrderService {
    */
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<IOrder | null> {
     try {
+      // Preparar el update con timestamps según el estado
+      const updateData: any = { 
+        status, 
+        updatedAt: new Date() 
+      };
+
+      // Agregar timestamps específicos según el estado (US-031)
+      if (status === OrderStatus.PREPARING) {
+        updateData.preparingStartedAt = new Date();
+      } else if (status === OrderStatus.READY) {
+        updateData.readyAt = new Date();
+      }
+
       const order = await Order.findByIdAndUpdate(
         orderId,
-        { status, updatedAt: new Date() },
+        updateData,
         { new: true }
       );
 
       if (order) {
-        // Publicar evento de actualización
-        await rabbitMQClient.publishEvent('order.updated', {
-          orderId: order._id.toString(),
-          orderNumber: order.orderNumber,
-          status: order.status,
-          updatedAt: order.updatedAt
-        });
+        // Publicar evento de actualización (opcional)
+        try {
+          await rabbitMQClient.publishEvent('order.updated', {
+            orderId: order._id.toString(),
+            orderNumber: order.orderNumber,
+            status: order.status,
+            updatedAt: order.updatedAt
+          });
+        } catch (mqError) {
+          console.warn(`⚠️ No se pudo publicar evento de actualización a RabbitMQ:`, mqError instanceof Error ? mqError.message : mqError);
+        }
       }
 
       return order;
     } catch (error) {
       console.error('❌ Error actualizando estado del pedido:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza los items de un pedido (solo si está PENDING)
+   * @param orderId - ID del pedido
+   * @param items - Nuevos items del pedido
+   * @param notes - Notas actualizadas (opcional)
+   * @returns El pedido actualizado
+   */
+  async updateOrder(orderId: string, items: OrderItem[], notes?: string): Promise<IOrder | null> {
+    try {
+      const order = await Order.findById(orderId);
+
+      if (!order) {
+        throw new Error('Pedido no encontrado');
+      }
+
+      // Solo permitir modificación si el pedido está PENDING
+      if (order.status !== OrderStatus.PENDING) {
+        throw new Error(`No se puede modificar un pedido en estado ${order.status}`);
+      }
+
+      // Actualizar items y recalcular total
+      order.items = items;
+      order.total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      if (notes !== undefined) {
+        order.notes = notes;
+      }
+
+      order.updatedAt = new Date();
+      const updatedOrder = await order.save();
+
+      // Publicar evento order.updated a RabbitMQ
+      try {
+        await rabbitMQClient.publishEvent('order.updated', {
+          type: 'order.updated',
+          orderId: updatedOrder._id.toString(),
+          orderNumber: updatedOrder.orderNumber,
+          customerName: updatedOrder.customerName,
+          items: updatedOrder.items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          notes: updatedOrder.notes,
+          totalAmount: updatedOrder.total,
+          status: updatedOrder.status,
+          updatedAt: updatedOrder.updatedAt.toISOString(),
+          timestamp: new Date().toISOString()
+        });
+        console.log(`📤 Evento order.updated publicado para pedido ${updatedOrder.orderNumber}`);
+      } catch (mqError) {
+        console.warn(`⚠️ No se pudo publicar evento order.updated a RabbitMQ:`, mqError instanceof Error ? mqError.message : mqError);
+      }
+
+      console.log(`✅ Pedido modificado: ${updatedOrder.orderNumber}`);
+      return updatedOrder;
+    } catch (error) {
+      console.error('❌ Error actualizando pedido:', error);
       throw error;
     }
   }

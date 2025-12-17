@@ -179,7 +179,7 @@ export class RabbitMQClient {
       return (
         this.connection !== null && 
         this.channel !== null &&
-        // @ts-ignore
+        // @ts-expect-error - amqplib types don't include connection property
         !this.connection.connection.closed
       );
     } catch {
