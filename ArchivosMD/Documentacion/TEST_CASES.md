@@ -118,31 +118,48 @@ La estrategia de pruebas adoptará un enfoque integral, combinando diferentes ti
 **3.1. Tipos de Pruebas**
 
 *   **Pruebas Unitarias:**
+
     *   **Objetivo:** Verificar la funcionalidad de componentes individuales de la aplicación.
+
     *   **Cobertura:** Se buscará una alta cobertura de pruebas unitarias (mínimo 85%) para el frontend y backend, validando US-038.
+
     *   **Herramientas:** Se utilizarán Jest y React Testing Library para el frontend, y Supertest para las APIs del backend.
+
     *   **Integración:** Las pruebas unitarias serán parte del pipeline de integración continua (CI/CD).
+
 *   **Pruebas de Integración:**
+
     *   **Objetivo:** Verificar la comunicación y el correcto funcionamiento entre los diferentes microservicios, con RabbitMQ (US-035), Firebase y otros servicios internos (Order Service, Kitchen Service, Notification Service).
+
     *   **Enfoque:** Se probarán los flujos de eventos asíncronos (US-011, US-012, US-040), la persistencia de datos a través de servicios y la correcta interacción entre el frontend y el backend.
+
 *   **Pruebas Funcionales (Manuales y Automatizadas):**
+
     *   **Objetivo:** Asegurar que cada historia de usuario y sus criterios de aceptación se cumplen correctamente.
+
     *   **Automatizadas:** Se priorizará la automatización de pruebas funcionales críticas y de regresión para los flujos principales de la aplicación (ej. creación de pedido, registro de usuario, marcaje de pedidos).
+
     *   **Manuales:** Se realizarán pruebas manuales exploratorias, de usabilidad (UI/UX) y para escenarios complejos o de difícil automatización, especialmente en las interfaces de usuario de cliente y administrador (US-001, US-003, US-005, US-006, US-013, US-017, US-018, US-020, US-022, US-023, US-024, US-025, US-026, US-032).
+
 *   **Pruebas de Regresión:**
+
     *   **Objetivo:** Confirmar que los cambios o nuevas funcionalidades no han introducido defectos en áreas existentes.
+
     *   **Enfoque:** Se ejecutarán suites de pruebas automatizadas después de cada integración significativa o despliegue.
 
 *   **Pruebas de Rendimiento y Carga:**
     *   **Objetivo:** Evaluar la capacidad de respuesta y estabilidad del sistema bajo diferentes cargas de trabajo.
+
     *   **Enfoque:** Se realizarán pruebas para identificar cuellos de botella en la carga de productos (US-001), el panel de reportes (US-028, US-029, US-031) y la gestión de pedidos, así como la escalabilidad y resiliencia de la comunicación asíncrona (US-035).
 
 *   **Pruebas de Seguridad:**
     *   **Objetivo:** Identificar vulnerabilidades y asegurar la protección de datos sensibles.
+
     *   **Enfoque:** Se verificarán las implementaciones de HTTPS, el hashing y salting de contraseñas (US-037), y se considerará la realización de una auditoría de seguridad o un pentest para evaluar la protección de contraseñas y otros aspectos de seguridad. Se incluirá la sanitización de entradas (ej. US-003, US-022).
 
 *   **Pruebas de Internacionalización (i18n):**
     *   **Objetivo:** Asegurar que la aplicación soporta correctamente múltiples idiomas y formatos culturales.
+
     *   **Enfoque:** Se probará el cambio de idioma, la visualización de textos, mensajes y el manejo de caracteres especiales en diferentes idiomas (US-033).
 
 *   **Pruebas de Manejo de Errores:**
@@ -272,10 +289,12 @@ A continuación, se presentan casos de prueba detallados para algunas de las his
     7.  Confirmar la modificación.
     8.  Verificar que el pedido P-001 en "Mis Pedidos" ahora muestra los productos actualizados.
     9.  (Verificación interna/Cocina) Iniciar sesión como personal de cocina y verificar que el pedido P-001 se actualiza con los nuevos detalles y que se recibe una notificación de modificación.
+
 *   **Datos de Entrada:**
     *   Usuario Cliente: `cliente.modifica@example.com`
     *   Pedido Inicial: P-001 ("Pizza Margarita" x1, estado "Pendiente").
     *   Modificación: "Pizza Margarita" a x2, añadir "Refresco" x1.
+    
 *   **Resultado Esperado:** El pedido se modifica exitosamente. El cliente ve los cambios reflejados. Order Service actualiza el pedido y Kitchen Service recibe una notificación de la modificación con los detalles actualizados.
 
 *   **ID:** TC-US005-002 (Negativo)

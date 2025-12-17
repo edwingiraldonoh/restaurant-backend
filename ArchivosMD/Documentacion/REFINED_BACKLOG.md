@@ -1,3 +1,4 @@
+
 # REFINED_BACKLOG
 **Documento de Historias de Usuario Refinadas**
 **Proyecto:** Delicious Kitchen
@@ -5,12 +6,12 @@
 ---
 
 ## US-001: Visualizar menú y tiempos de carga
-[cite_start]**Descripción:** Como Cliente, quiero ver el menú con las categorías cargadas de forma prioritaria, para minimizar mi tiempo de espera antes de poder seleccionar un producto[cite: 2062].
+**Descripción:** Como Cliente, quiero ver el menú con las categorías cargadas de forma prioritaria, para minimizar mi tiempo de espera antes de poder seleccionar un producto.
 
 **Criterios de Aceptación:**
-1. [cite_start]**Rendimiento (LCP):** El renderizado del listado no debe exceder los 2.5 segundos en red 4G simulada[cite: 2064].
-2. [cite_start]**Paginación:** Implementar Lazy Loading para categorías con >20 productos; payload inicial <500KB[cite: 2065].
-3. [cite_start]**UI:** Cada tarjeta muestra obligatoriamente: Título, Precio ($0.00) y Botón "Añadir"[cite: 2066].
+1. **Rendimiento (LCP):** El renderizado del listado no debe exceder los 2.5 segundos en red 4G simulada.
+2. **Paginación:** Implementar Lazy Loading para categorías con >20 productos; payload inicial <500KB.
+3. **UI:** Cada tarjeta muestra obligatoriamente: Título, Precio ($0.00) y Botón "Añadir".
 
 ---
 
