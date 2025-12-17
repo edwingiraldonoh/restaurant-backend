@@ -4,6 +4,7 @@ import { connectDatabase } from './config/database';
 import { rabbitMQClient } from './rabbitmq/rabbitmqClient';
 import orderRoutes from './routes/orderRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import adminRoutes from './routes/adminRoutes';
 import { orderService } from './services/orderService';
 import { OrderStatus } from './models/Order';
 
@@ -17,6 +18,7 @@ app.use(express.json());
 // Rutas
 app.use('/orders', orderRoutes);
 app.use('/', analyticsRoutes);
+app.use('/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

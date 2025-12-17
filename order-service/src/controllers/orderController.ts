@@ -82,12 +82,14 @@ export class OrderController {
     try {
       const { id } = req.params;
 
-      // Intentar buscar por orderNumber si empieza con ORD-, sino por _id
-      let order;
+      let order = null;
+      // Intentar buscar por orderNumber si empieza con ORD-, sino validar ObjectId
       if (id.startsWith('ORD-')) {
         order = await orderService.getOrderByNumber(id);
-      } else {
+      } else if (/^[a-fA-F0-9]{24}$/.test(id)) {
         order = await orderService.getOrderById(id);
+      } else {
+        order = await orderService.getOrderByNumber(id);
       }
 
       if (!order) {
@@ -96,7 +98,6 @@ export class OrderController {
         });
         return;
       }
-
       res.json({
         order: {
           id: order._id,
@@ -124,12 +125,14 @@ export class OrderController {
   async getOrderStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+<<<<<<< HEAD
 
       // Intentar buscar por orderNumber si empieza con ORD-, sino por _id
       let order;
+      let order = null;
       if (id.startsWith('ORD-')) {
         order = await orderService.getOrderByNumber(id);
-      } else {
+      } else if (/^[a-fA-F0-9]{24}$/.test(id)) {
         const orderStatus = await orderService.getOrderStatus(id);
         if (orderStatus) {
           res.json({
@@ -138,7 +141,9 @@ export class OrderController {
           });
           return;
         }
-        order = null;
+        order = await orderService.getOrderById(id);
+      } else {
+        order = await orderService.getOrderByNumber(id);
       }
 
       if (!order) {
@@ -147,7 +152,6 @@ export class OrderController {
         });
         return;
       }
-
       res.json({
         orderNumber: order.orderNumber,
         status: order.status
