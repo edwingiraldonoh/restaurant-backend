@@ -6,6 +6,7 @@ export class OrderController {
   /**
    * POST /orders - Crear un nuevo pedido
    */
+  // eslint-disable-next-line complexity
   async createOrder(req: Request, res: Response): Promise<void> {
     try {
       const { customerName, customerEmail, items, notes } = req.body;
@@ -132,14 +133,6 @@ export class OrderController {
       if (id.startsWith('ORD-')) {
         order = await orderService.getOrderByNumber(id);
       } else if (/^[a-fA-F0-9]{24}$/.test(id)) {
-        const orderStatus = await orderService.getOrderStatus(id);
-        if (orderStatus) {
-          res.json({
-            orderNumber: orderStatus.orderNumber,
-            status: orderStatus.status
-          });
-          return;
-        }
         order = await orderService.getOrderById(id);
       } else {
         order = await orderService.getOrderByNumber(id);
@@ -161,6 +154,82 @@ export class OrderController {
         error: 'Error al consultar el estado del pedido',
         details: error.message 
       });
+    }
+  }
+
+  /**
+   * PUT /orders/:id - Modificar un pedido existente (solo si está PENDING)
+   */
+  // eslint-disable-next-line complexity
+  async updateOrder(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { items, notes } = req.body;
+
+      // Validar items
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        res.status(400).json({ 
+          error: 'El pedido debe tener al menos un item' 
+        });
+        return;
+      }
+
+      // Validar cada item
+      for (const item of items) {
+        if (!item.name || !item.quantity || item.price === undefined) {
+          res.status(400).json({ 
+            error: 'Cada item debe tener name, quantity y price' 
+          });
+          return;
+        }
+        if (item.quantity < 1 || item.price < 0) {
+          res.status(400).json({ 
+            error: 'Quantity debe ser mayor a 0 y price debe ser mayor o igual a 0' 
+          });
+          return;
+        }
+      }
+
+      const order = await orderService.updateOrder(id, items as OrderItem[], notes);
+
+      if (!order) {
+        res.status(404).json({ 
+          error: 'Pedido no encontrado' 
+        });
+        return;
+      }
+
+      res.json({
+        message: 'Pedido modificado exitosamente',
+        order: {
+          id: order._id,
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          items: order.items,
+          total: order.total,
+          status: order.status,
+          notes: order.notes,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt
+        }
+      });
+    } catch (error: any) {
+      console.error('Error en updateOrder:', error);
+      
+      if (error.message.includes('No se puede modificar')) {
+        res.status(400).json({ 
+          error: error.message 
+        });
+      } else if (error.message.includes('no encontrado')) {
+        res.status(404).json({ 
+          error: error.message 
+        });
+      } else {
+        res.status(500).json({ 
+          error: 'Error al modificar el pedido',
+          details: error.message 
+        });
+      }
     }
   }
 

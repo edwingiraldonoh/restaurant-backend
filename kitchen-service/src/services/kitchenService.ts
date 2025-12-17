@@ -262,6 +262,37 @@ export class KitchenService {
 
     } catch (error) {
       console.error(`❌ Error handling order.cancelled:`, error);
+   * Maneja el evento order.updated del order-service
+   * Actualiza el pedido en la cocina si aún está RECEIVED
+   */
+  async handleOrderUpdated(orderData: any): Promise<IKitchenOrder | null> {
+    try {
+      console.log(`🔄 Processing order update: ${orderData.orderId}`);
+
+      const kitchenOrder = await KitchenOrder.findOne({ orderId: orderData.orderId });
+
+      if (!kitchenOrder) {
+        console.warn(`⚠️ Order ${orderData.orderId} not found in kitchen, skipping update`);
+        return null;
+      }
+
+      // Solo permitir actualización si el pedido está RECEIVED (no iniciado)
+      if (kitchenOrder.status !== 'RECEIVED') {
+        console.warn(`⚠️ Order ${orderData.orderId} is ${kitchenOrder.status}, cannot update`);
+        return kitchenOrder;
+      }
+
+      // Actualizar items y recalcular tiempo estimado
+      kitchenOrder.items = orderData.items;
+      kitchenOrder.notes = orderData.notes;
+      kitchenOrder.estimatedTime = this.calculateEstimatedTime(orderData.items);
+      
+      await kitchenOrder.save();
+      console.log(`✅ Kitchen order updated: ${orderData.orderId}`);
+
+      return kitchenOrder;
+    } catch (error) {
+      console.error(`❌ Error handling order.updated:`, error);
       throw error;
     }
   }

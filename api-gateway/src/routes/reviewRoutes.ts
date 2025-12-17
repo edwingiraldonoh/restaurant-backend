@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
-import { config } from '../config';
 
 const router = express.Router();
 const REVIEW_SERVICE_URL = process.env.REVIEW_SERVICE_URL || 'http://localhost:3004';
@@ -64,8 +63,8 @@ router.get('/admin/reviews', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy para actualizar estado de reseña
-router.patch('/admin/:id/status', async (req: Request, res: Response) => {
+// Proxy para actualizar estado de reseña (modificación: ahora acepta /:id/status directamente)
+router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const response = await axios.patch(

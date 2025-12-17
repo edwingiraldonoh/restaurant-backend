@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import reviewRoutes from './routes/reviewRoutes';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { logger } from './utils/logger';
 
 dotenv.config();
 
@@ -25,14 +27,9 @@ app.get('/health', (req: Request, res: Response) => {
 // Routes
 app.use('/reviews', reviewRoutes);
 
-// Error handler
-app.use((err: any, req: Request, res: Response, next: any) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-  });
-});
+// Middleware de manejo de errores (después de todas las rutas)
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // Start server
 const startServer = async () => {
@@ -40,10 +37,10 @@ const startServer = async () => {
     await connectDatabase();
     
     app.listen(PORT, () => {
-      console.log(`🚀 Review Service running on port ${PORT}`);
+      logger.info(`Review Service running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server', { error: error instanceof Error ? error.message : error });
     process.exit(1);
   }
 };

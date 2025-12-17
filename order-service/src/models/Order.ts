@@ -19,6 +19,9 @@ export interface IOrder extends Document {
   notes?: string;
   status: OrderStatus;
   total: number;
+  notes?: string;              // Notas especiales del pedido
+  preparingStartedAt?: Date;  // Cuando comenzó la preparación
+  readyAt?: Date;              // Cuando se marcó como listo
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,6 +81,18 @@ const OrderSchema = new Schema({
     type: Number, 
     required: true, 
     min: 0 
+  },
+  notes: {
+    type: String,
+    default: null
+  },
+  preparingStartedAt: {
+    type: Date,
+    default: null
+  },
+  readyAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true,
