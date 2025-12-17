@@ -139,11 +139,11 @@
 ---
 
 ## US-015: Registrarse en la plataforma
-**Descripción:** Como Usuario, quiero registrarme con una cuenta nueva para acceder a las funcionalidades.
+**Descripción:** Como Administrador, quiero registrar usuarios para que puedan acceder a las funcionalidades.
 
 **Criterios de Aceptación:**
 1. Creación de cuenta en Firebase con email y contraseña válidos.
-2. Asignación de rol por defecto "Cliente" al nuevo usuario.
+2. Asignación de rol por defecto "kitchen" al nuevo usuario.
 
 ---
 
