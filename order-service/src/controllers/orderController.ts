@@ -76,13 +76,19 @@ export class OrderController {
   }
 
   /**
-   * GET /orders/:id - Obtener un pedido por ID
+   * GET /orders/:id - Obtener un pedido por ID o por orderNumber
    */
   async getOrderById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
 
-      const order = await orderService.getOrderById(id);
+      // Intentar buscar por orderNumber si empieza con ORD-, sino por _id
+      let order;
+      if (id.startsWith('ORD-')) {
+        order = await orderService.getOrderByNumber(id);
+      } else {
+        order = await orderService.getOrderById(id);
+      }
 
       if (!order) {
         res.status(404).json({ 
@@ -113,15 +119,29 @@ export class OrderController {
   }
 
   /**
-   * GET /orders/:id/status - Consultar estado de un pedido
+   * GET /orders/:id/status - Consultar estado de un pedido por ID o orderNumber
    */
   async getOrderStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
 
-      const orderStatus = await orderService.getOrderStatus(id);
+      // Intentar buscar por orderNumber si empieza con ORD-, sino por _id
+      let order;
+      if (id.startsWith('ORD-')) {
+        order = await orderService.getOrderByNumber(id);
+      } else {
+        const orderStatus = await orderService.getOrderStatus(id);
+        if (orderStatus) {
+          res.json({
+            orderNumber: orderStatus.orderNumber,
+            status: orderStatus.status
+          });
+          return;
+        }
+        order = null;
+      }
 
-      if (!orderStatus) {
+      if (!order) {
         res.status(404).json({ 
           error: 'Pedido no encontrado' 
         });
@@ -129,8 +149,8 @@ export class OrderController {
       }
 
       res.json({
-        orderNumber: orderStatus.orderNumber,
-        status: orderStatus.status
+        orderNumber: order.orderNumber,
+        status: order.status
       });
     } catch (error: any) {
       console.error('Error en getOrderStatus:', error);

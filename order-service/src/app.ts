@@ -3,6 +3,7 @@ import cors from 'cors';
 import { connectDatabase } from './config/database';
 import { rabbitMQClient } from './rabbitmq/rabbitmqClient';
 import orderRoutes from './routes/orderRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 import { orderService } from './services/orderService';
 import { OrderStatus } from './models/Order';
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // Rutas
 app.use('/orders', orderRoutes);
+app.use('/', analyticsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -31,11 +33,12 @@ async function startServer() {
     // Conectar a MongoDB
     await connectDatabase();
 
-    // Conectar a RabbitMQ
-    await rabbitMQClient.connect();
-
-    // Suscribirse al evento order.preparing del Kitchen Service
-    await rabbitMQClient.consumeEvent('order.preparing', async (message) => {
+    // Conectar a RabbitMQ (opcional - no falla si no está disponible)
+    try {
+      await rabbitMQClient.connect();
+      
+      // Suscribirse al evento order.preparing del Kitchen Service
+      await rabbitMQClient.consumeEvent('order.preparing', async (message) => {
       try {
         const { orderId } = message;
 
@@ -90,6 +93,11 @@ async function startServer() {
         throw error; // Re-lanzar para que el mensaje se rechace
       }
     });
+      
+      console.log(`📥 RabbitMQ conectado - Consumiendo eventos: order.preparing, order.ready`);
+    } catch (rabbitmqError) {
+      console.warn(`⚠️ RabbitMQ no disponible - El servicio funcionará sin mensajería:`, rabbitmqError instanceof Error ? rabbitmqError.message : rabbitmqError);
+    }
 
     // Iniciar servidor
     app.listen(PORT, () => {
@@ -100,7 +108,6 @@ async function startServer() {
       console.log(`   GET    /orders - Listar pedidos`);
       console.log(`   GET    /orders/:id - Obtener pedido`);
       console.log(`   GET    /orders/:id/status - Consultar estado`);
-      console.log(`📥 Consumiendo eventos: order.preparing, order.ready`);
     });
   } catch (error) {
     console.error('❌ Error iniciando el servidor:', error);

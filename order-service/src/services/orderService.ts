@@ -55,7 +55,13 @@ export class OrderService {
         }
       };
 
-      await rabbitMQClient.publishEvent('order.created', eventData);
+      // Intentar publicar evento, pero no fallar si RabbitMQ no está disponible
+      try {
+        await rabbitMQClient.publishEvent('order.created', eventData);
+        console.log(`📤 Evento order.created publicado`);
+      } catch (mqError) {
+        console.warn(`⚠️ No se pudo publicar evento a RabbitMQ (el pedido se creó correctamente):`, mqError instanceof Error ? mqError.message : mqError);
+      }
 
       console.log(`✅ Pedido creado: ${savedOrder.orderNumber}`);
 
@@ -132,13 +138,17 @@ export class OrderService {
       );
 
       if (order) {
-        // Publicar evento de actualización
-        await rabbitMQClient.publishEvent('order.updated', {
-          orderId: order._id.toString(),
-          orderNumber: order.orderNumber,
-          status: order.status,
-          updatedAt: order.updatedAt
-        });
+        // Publicar evento de actualización (opcional)
+        try {
+          await rabbitMQClient.publishEvent('order.updated', {
+            orderId: order._id.toString(),
+            orderNumber: order.orderNumber,
+            status: order.status,
+            updatedAt: order.updatedAt
+          });
+        } catch (mqError) {
+          console.warn(`⚠️ No se pudo publicar evento de actualización a RabbitMQ:`, mqError instanceof Error ? mqError.message : mqError);
+        }
       }
 
       return order;

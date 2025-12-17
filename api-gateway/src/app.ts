@@ -3,6 +3,8 @@ import cors from 'cors';
 import axios from 'axios';
 import orderRoutes from './routes/orderRoutes';
 import kitchenRoutes from './routes/kitchenRoutes';
+import reviewRoutes from './routes/reviewRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 import { config, validateConfig } from './config';
 
 // Validar configuración al iniciar
@@ -27,6 +29,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use('/orders', orderRoutes);
 app.use('/kitchen', kitchenRoutes);
+app.use('/reviews', reviewRoutes);
+app.use('/', analyticsRoutes);
 
 app.get('/health', async (req: Request, res: Response) => {
   const healthStatus = {
