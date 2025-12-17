@@ -50,8 +50,10 @@ async function startServer() {
     // 4. Registrar rutas
     app.use('/api/kitchen', kitchenRoutes);
 
-    // 5. Configurar consumidor de eventos order.created (paso 2 del flujo)
-    console.log('👂 Setting up RabbitMQ consumer for order.created...');
+    // 5. Configurar consumidores de eventos RabbitMQ
+    console.log('👂 Setting up RabbitMQ consumers...');
+    
+    // Consumer para order.created
     await rabbitMQClient.consume(
       'kitchen-service-queue',
       'order.created',
@@ -62,6 +64,9 @@ async function startServer() {
     );
     console.log('✅ Consumer ready for order.created events');
 
+    // Consumer para order.updated
+    await rabbitMQClient.consume(
+      'kitchen-service-updated-queue',
     // Configurar consumidor de eventos order.updated (para modificaciones)
     console.log('👂 Setting up RabbitMQ consumer for order.updated...');
     await rabbitMQClient.consume(
@@ -74,6 +79,18 @@ async function startServer() {
     );
     console.log('✅ Consumer ready for order.updated events');
 
+    // Consumer para order.cancelled
+    await rabbitMQClient.consume(
+      'kitchen-service-cancelled-queue',
+      'order.cancelled',
+      async (cancelData) => {
+        console.log('📥 Received order.cancelled event:', cancelData);
+        await kitchenService.handleOrderCancelled(cancelData);
+      }
+    );
+    console.log('✅ Consumer ready for order.cancelled events');
+
+    // 6. Iniciar servidor
     // 6. Middleware de manejo de errores (después de las rutas)
     app.use(notFoundHandler);
     app.use(errorHandler);

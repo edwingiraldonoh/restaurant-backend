@@ -157,7 +157,7 @@
 ---
 
 ## US-017: Crear nuevos usuarios (Admin)
-**Descripción:** Como Administrador, quiero crear cuentas para personal o clientes, para gestionar accesos centralizados.
+**Descripción:** Como Administrador, quiero crear cuentas para personal, para gestionar accesos centralizados.
 
 **Criterios de Aceptación:**
 1. Opción "Crear Nuevo Usuario" disponible en gestión de usuarios.

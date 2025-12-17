@@ -14,7 +14,9 @@ export enum OrderStatus {
 export interface IOrder extends Document {
   orderNumber: string;
   customerName: string;
+  customerEmail?: string;
   items: OrderItem[];
+  notes?: string;
   status: OrderStatus;
   total: number;
   notes?: string;              // Notas especiales del pedido
@@ -52,6 +54,10 @@ const OrderSchema = new Schema({
     required: true,
     trim: true 
   },
+  customerEmail: {
+    type: String,
+    trim: true
+  },
   items: { 
     type: [OrderItemSchema], 
     required: true,
@@ -59,6 +65,11 @@ const OrderSchema = new Schema({
       validator: (items: OrderItem[]) => items.length > 0,
       message: 'El pedido debe tener al menos un item'
     }
+  },
+  notes: {
+    type: String,
+    trim: true,
+    maxlength: 500
   },
   status: { 
     type: String, 
