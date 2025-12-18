@@ -135,7 +135,12 @@ export class KitchenService {
    */
   async startPreparing(orderId: string): Promise<IKitchenOrder> {
     try {
-      const order = await KitchenOrder.findOne({ orderId });
+      // Buscar por orderId o por orderNumber (si es formato ORD-XXXXX)
+      const query = orderId.startsWith('ORD-') 
+        ? { orderNumber: orderId } 
+        : { orderId };
+      
+      const order = await KitchenOrder.findOne(query);
 
       if (!order) {
         throw new Error(`Order ${orderId} not found`);
@@ -183,7 +188,12 @@ export class KitchenService {
    */
   async markAsReady(orderId: string): Promise<IKitchenOrder> {
     try {
-      const order = await KitchenOrder.findOne({ orderId });
+      // Buscar por orderId o por orderNumber (si es formato ORD-XXXXX)
+      const query = orderId.startsWith('ORD-') 
+        ? { orderNumber: orderId } 
+        : { orderId };
+      
+      const order = await KitchenOrder.findOne(query);
 
       if (!order) {
         throw new Error(`Order ${orderId} not found`);
@@ -246,11 +256,10 @@ export class KitchenService {
       // Validar que el pedido no esté en preparación o listo
       if (kitchenOrder.status === 'PREPARING' || kitchenOrder.status === 'READY') {
         console.log(
-          `⚠️ Cannot cancel order ${cancelData.orderId} - already ${kitchenOrder.status}`
+          `⚠️ Cannot cancel order ${cancelData.orderId} - already ${kitchenOrder.status}. Ignoring cancellation request.`
         );
-        throw new Error(
-          `No se puede cancelar el pedido porque ya está en estado ${kitchenOrder.status}`
-        );
+        // No lanzar error, simplemente ignorar el evento de cancelación
+        return;
       }
 
       // Marcar como cancelado
@@ -262,37 +271,6 @@ export class KitchenService {
 
     } catch (error) {
       console.error(`❌ Error handling order.cancelled:`, error);
-   * Maneja el evento order.updated del order-service
-   * Actualiza el pedido en la cocina si aún está RECEIVED
-   */
-  async handleOrderUpdated(orderData: any): Promise<IKitchenOrder | null> {
-    try {
-      console.log(`🔄 Processing order update: ${orderData.orderId}`);
-
-      const kitchenOrder = await KitchenOrder.findOne({ orderId: orderData.orderId });
-
-      if (!kitchenOrder) {
-        console.warn(`⚠️ Order ${orderData.orderId} not found in kitchen, skipping update`);
-        return null;
-      }
-
-      // Solo permitir actualización si el pedido está RECEIVED (no iniciado)
-      if (kitchenOrder.status !== 'RECEIVED') {
-        console.warn(`⚠️ Order ${orderData.orderId} is ${kitchenOrder.status}, cannot update`);
-        return kitchenOrder;
-      }
-
-      // Actualizar items y recalcular tiempo estimado
-      kitchenOrder.items = orderData.items;
-      kitchenOrder.notes = orderData.notes;
-      kitchenOrder.estimatedTime = this.calculateEstimatedTime(orderData.items);
-      
-      await kitchenOrder.save();
-      console.log(`✅ Kitchen order updated: ${orderData.orderId}`);
-
-      return kitchenOrder;
-    } catch (error) {
-      console.error(`❌ Error handling order.updated:`, error);
       throw error;
     }
   }
@@ -315,7 +293,12 @@ export class KitchenService {
    */
   async getOrderById(orderId: string): Promise<IKitchenOrder | null> {
     try {
-      return await KitchenOrder.findOne({ orderId });
+      // Buscar por orderId o por orderNumber (si es formato ORD-XXXXX)
+      const query = orderId.startsWith('ORD-') 
+        ? { orderNumber: orderId } 
+        : { orderId };
+      
+      return await KitchenOrder.findOne(query);
     } catch (error) {
       console.error(`❌ Error fetching order:`, error);
       throw error;

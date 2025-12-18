@@ -57,11 +57,14 @@ router.post('/admin/analytics/export', async (req: Request, res: Response) => {
 // Implementa US-030: Exportar reportes a XLSX estandarizado
 router.post('/admin/analytics/export-xlsx', async (req: Request, res: Response) => {
   try {
+    console.log('📊 Proxying XLSX export to order-service...');
     const response = await axios.post(
       `${ORDER_SERVICE_URL}/admin/analytics/export-xlsx`,
       req.body,
       { responseType: 'arraybuffer' }
     );
+    
+    console.log('✅ XLSX export successful, sending to client');
     
     // Copiar headers relevantes
     const contentDisposition = response.headers['content-disposition'];
@@ -75,10 +78,29 @@ router.post('/admin/analytics/export-xlsx', async (req: Request, res: Response) 
     
     res.status(response.status).send(response.data);
   } catch (error: any) {
-    console.error('Error exporting analytics to XLSX:', error.message);
-    res.status(error.response?.status || 500).json(
-      error.response?.data || { success: false, message: 'Error al exportar analytics a XLSX' }
-    );
+    console.error('❌ Error exporting analytics to XLSX:', {
+      message: error.message,
+      status: error.response?.status,
+      url: `${ORDER_SERVICE_URL}/admin/analytics/export-xlsx`,
+      stack: error.stack
+    });
+    
+    // Si hay respuesta de error del servicio, intentar parsearla
+    if (error.response?.data) {
+      try {
+        const errorText = Buffer.from(error.response.data).toString('utf-8');
+        const errorJson = JSON.parse(errorText);
+        res.status(error.response.status).json(errorJson);
+        return;
+      } catch (parseError) {
+        // Si no se puede parsear, devolver error genérico
+      }
+    }
+    
+    res.status(error.response?.status || 500).json({
+      success: false,
+      message: 'Error al exportar analytics a XLSX'
+    });
   }
 });
 

@@ -33,19 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy para obtener reseña por ID
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.get(`${REVIEW_SERVICE_URL}/reviews/${id}`);
-    res.status(response.status).json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching review:', error.message);
-    res.status(error.response?.status || 500).json(
-      error.response?.data || { success: false, message: 'Error al obtener reseña' }
-    );
-  }
-});
+// ========== RUTAS DE ADMINISTRACIÓN (deben ir primero para evitar conflictos) ==========
 
 // Proxy para obtener todas las reseñas (admin)
 router.get('/admin/reviews', async (req: Request, res: Response) => {
@@ -63,8 +51,8 @@ router.get('/admin/reviews', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy para actualizar estado de reseña (modificación: ahora acepta /:id/status directamente)
-router.patch('/:id/status', async (req: Request, res: Response) => {
+// Proxy para actualizar estado de reseña (debe incluir /admin/ en la ruta)
+router.patch('/admin/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const response = await axios.patch(
@@ -90,6 +78,22 @@ router.delete('/admin/:id', async (req: Request, res: Response) => {
     console.error('Error deleting review:', error.message);
     res.status(error.response?.status || 500).json(
       error.response?.data || { success: false, message: 'Error al eliminar reseña' }
+    );
+  }
+});
+
+// ========== RUTAS PÚBLICAS ==========
+
+// Proxy para obtener reseña por ID
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(`${REVIEW_SERVICE_URL}/reviews/${id}`);
+    res.status(response.status).json(response.data);
+  } catch (error: any) {
+    console.error('Error fetching review:', error.message);
+    res.status(error.response?.status || 500).json(
+      error.response?.data || { success: false, message: 'Error al obtener reseña' }
     );
   }
 });

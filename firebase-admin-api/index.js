@@ -13,6 +13,20 @@ if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !process.env.SERVICE_ACCOUNT_
 }
 
 const serviceAccountPath = process.env.SERVICE_ACCOUNT_PATH || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+// Verificar que el path sea un archivo y no un directorio
+if (!fs.existsSync(serviceAccountPath)) {
+  console.error(`Service account file not found: ${serviceAccountPath}`);
+  process.exit(1);
+}
+
+const stats = fs.statSync(serviceAccountPath);
+if (stats.isDirectory()) {
+  console.error(`SERVICE_ACCOUNT_PATH is a directory, not a file: ${serviceAccountPath}`);
+  console.error('Expected path to serviceAccountKey.json file');
+  process.exit(1);
+}
+
 const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
 
 admin.initializeApp({

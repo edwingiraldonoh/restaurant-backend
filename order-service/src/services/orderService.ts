@@ -266,68 +266,6 @@ export class OrderService {
   }
 
   /**
-   * Actualiza los items de un pedido (solo si está PENDING)
-   * @param orderId - ID del pedido
-   * @param items - Nuevos items del pedido
-   * @param notes - Notas actualizadas (opcional)
-   * @returns El pedido actualizado
-   */
-  async updateOrder(orderId: string, items: OrderItem[], notes?: string): Promise<IOrder | null> {
-    try {
-      const order = await Order.findById(orderId);
-
-      if (!order) {
-        throw new Error('Pedido no encontrado');
-      }
-
-      // Solo permitir modificación si el pedido está PENDING
-      if (order.status !== OrderStatus.PENDING) {
-        throw new Error(`No se puede modificar un pedido en estado ${order.status}`);
-      }
-
-      // Actualizar items y recalcular total
-      order.items = items;
-      order.total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      
-      if (notes !== undefined) {
-        order.notes = notes;
-      }
-
-      order.updatedAt = new Date();
-      const updatedOrder = await order.save();
-
-      // Publicar evento order.updated a RabbitMQ
-      try {
-        await rabbitMQClient.publishEvent('order.updated', {
-          type: 'order.updated',
-          orderId: updatedOrder._id.toString(),
-          orderNumber: updatedOrder.orderNumber,
-          customerName: updatedOrder.customerName,
-          items: updatedOrder.items.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price
-          })),
-          notes: updatedOrder.notes,
-          totalAmount: updatedOrder.total,
-          status: updatedOrder.status,
-          updatedAt: updatedOrder.updatedAt.toISOString(),
-          timestamp: new Date().toISOString()
-        });
-        console.log(`📤 Evento order.updated publicado para pedido ${updatedOrder.orderNumber}`);
-      } catch (mqError) {
-        console.warn(`⚠️ No se pudo publicar evento order.updated a RabbitMQ:`, mqError instanceof Error ? mqError.message : mqError);
-      }
-
-      console.log(`✅ Pedido modificado: ${updatedOrder.orderNumber}`);
-      return updatedOrder;
-    } catch (error) {
-      console.error('❌ Error actualizando pedido:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Obtiene todos los pedidos (con paginación opcional)
    * @param limit - Límite de resultados
    * @param skip - Número de resultados a saltar

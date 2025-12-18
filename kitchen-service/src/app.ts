@@ -64,13 +64,10 @@ async function startServer() {
     );
     console.log('✅ Consumer ready for order.created events');
 
-    // Consumer para order.updated
-    await rabbitMQClient.consume(
-      'kitchen-service-updated-queue',
     // Configurar consumidor de eventos order.updated (para modificaciones)
     console.log('👂 Setting up RabbitMQ consumer for order.updated...');
     await rabbitMQClient.consume(
-      'kitchen-service-queue',
+      'kitchen-service-updated-queue',
       'order.updated',
       async (orderData) => {
         console.log('📥 Received order.updated event:', orderData);

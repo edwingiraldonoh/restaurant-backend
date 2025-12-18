@@ -1,10 +1,20 @@
 **Documento Maestro de Pruebas: Delicious Kitchen**
 
-**Fecha:** 2025-12-15
+**Fecha:** 2025-12-18
+**Versión:** 2.0 - Actualizado con Mejoras Implementadas
+**Estado:** Alineado con REFINED_BACKLOG.md (Principios INVEST)
 
 **1. Alcance de las Pruebas**
 
-Este documento define el alcance de las pruebas para la aplicación "Delicious Kitchen", cubriendo las funcionalidades descritas en las historias de usuario (US-001 a US-040).
+Este documento define el alcance de las pruebas para la aplicación "Delicious Kitchen", cubriendo las funcionalidades descritas en las historias de usuario (US-001 a US-040) del REFINED_BACKLOG.md.
+
+**Mejoras Implementadas en esta Versión:**
+- ✅ Sincronización de estados entre microservicios vía RabbitMQ
+- ✅ Sistema de notificaciones SSE completamente funcional
+- ✅ Flujo de reseñas con validación de estados
+- ✅ Iconos de timeline alineados con estados reales del proceso
+- ✅ Manejo robusto de errores en API Gateway
+- ✅ Consumers de eventos activados en Order Service
 
 **1.1. Qué se va a Probar**
 
@@ -27,10 +37,17 @@ Las pruebas se enfocarán en verificar la correcta implementación y funcionamie
     *   Recepción de notificaciones de nuevos pedidos vía RabbitMQ (US-011).
     *   Recepción de notificaciones de pedidos cancelados vía RabbitMQ (US-012).
     *   Recepción de notificaciones de modificaciones de pedidos vía RabbitMQ (US-040).
+    *   **✅ MEJORA IMPLEMENTADA:** Kitchen Service publica eventos `order.preparing` y `order.ready` correctamente
+    *   **✅ MEJORA IMPLEMENTADA:** Order Service consume eventos y actualiza estados en MongoDB
+    *   **✅ MEJORA IMPLEMENTADA:** Sincronización completa: Kitchen (PREPARING/READY) → Order Service (preparing/ready)
 
 *   **Notificaciones en Tiempo Real (FT-003):**
     *   Recepción de notificaciones para el cliente cuando el pedido está "En preparación" (US-009).
     *   Recepción de notificaciones para el cliente cuando el pedido está "Listo" (US-010).
+    *   **✅ MEJORA IMPLEMENTADA:** Proxy SSE configurado en API Gateway (`notificationRoutes.ts`)
+    *   **✅ MEJORA IMPLEMENTADA:** Frontend conectado vía `useNotification.js` hook
+    *   **✅ MEJORA IMPLEMENTADA:** Manejo de eventos `order.preparing`, `order.ready`, `order.updated` en `OrderStatus.jsx`
+    *   **✅ MEJORA IMPLEMENTADA:** Timeline de estados sincronizado con notificaciones SSE
 
 *   **Autenticación y Gestión de Usuarios/Roles (FT-005):**
     *   Registro de nuevos usuarios (cliente) en la plataforma (US-015).
@@ -46,6 +63,10 @@ Las pruebas se enfocarán en verificar la correcta implementación y funcionamie
     *   Visualización de reseñas pendientes de moderación (Admin) (US-023).
     *   Aprobación u ocultamiento de reseñas (Admin) (US-024).
     *   Visualización de reseñas aprobadas por el cliente (US-025).
+    *   **✅ MEJORA IMPLEMENTADA:** Modal de reseñas se muestra solo cuando `order.status === 'ready' || 'delivered'`
+    *   **✅ MEJORA IMPLEMENTADA:** Review Service funcionando correctamente (verificado con curl)
+    *   **✅ MEJORA IMPLEMENTADA:** Rutas de reviews configuradas en API Gateway con orden correcto
+    *   **✅ PROBLEMA RESUELTO:** Reseñas no funcionaban porque Order Service no sincronizaba estados → Ahora funcional
 
 *   **Generación de Reportes de Negocio (FT-007):**
     *   Acceso al panel de reportes (Admin) y visualización de estadísticas clave (US-026).
@@ -183,6 +204,165 @@ La estrategia de pruebas adoptará un enfoque integral, combinando diferentes ti
 *   **Ciclos de Feedback:** Se establecerán ciclos de feedback rápidos entre desarrollo y QA para resolver defectos de manera eficiente.
 
 *   **Gestión de Defectos:** Se utilizará un sistema de seguimiento de defectos para registrar, priorizar y gestionar los errores encontrados.
+
+**3.3. Casos de Prueba de Mejoras Implementadas (2025-12-18)**
+
+Esta sección documenta los casos de prueba específicos para verificar las mejoras implementadas durante la sesión de debugging y optimización.
+
+---
+
+**✅ TC-MEJORA-001: Sincronización de Estados entre Microservicios**
+
+*   **Historia Relacionada:** US-007, US-008, US-011
+*   **Descripción:** Verificar que cuando Kitchen Service marca un pedido como "PREPARING" o "READY", el Order Service actualiza su estado correctamente.
+*   **Precondiciones:**
+    1. RabbitMQ está corriendo y accesible
+    2. Order Service está consumiendo eventos de RabbitMQ
+    3. Kitchen Service está publicando eventos correctamente
+*   **Pasos de Prueba:**
+    1. Crear un pedido nuevo vía POST `/orders`
+    2. Verificar que el pedido tiene estado `pending` en Order Service
+    3. Marcar el pedido como "start-preparing" en Kitchen Service: POST `/kitchen/orders/{id}/start-preparing`
+    4. Verificar que Order Service actualiza el estado a `preparing`
+    5. Marcar el pedido como "ready" en Kitchen Service: POST `/kitchen/orders/{id}/ready`
+    6. Verificar que Order Service actualiza el estado a `ready`
+*   **Resultado Esperado:**
+    - Estados sincronizados: Kitchen (PREPARING) → Order (`preparing`)
+    - Estados sincronizados: Kitchen (READY) → Order (`ready`)
+    - Logs de Order Service muestran: "✅ Pedido {orderNumber} actualizado a estado PREPARING/READY"
+*   **Estado:** ✅ VALIDADO (2025-12-18)
+
+---
+
+**✅ TC-MEJORA-002: Notificaciones SSE en Tiempo Real**
+
+*   **Historia Relacionada:** US-009, US-010
+*   **Descripción:** Verificar que el frontend recibe notificaciones SSE cuando cambia el estado del pedido.
+*   **Precondiciones:**
+    1. Notification Service está corriendo en puerto 3003
+    2. API Gateway tiene ruta `/notifications/stream` configurada
+    3. Frontend está conectado vía `useNotification.js`
+*   **Pasos de Prueba:**
+    1. Abrir página de seguimiento de pedido en el navegador
+    2. Verificar conexión SSE en Network tab (EventSource)
+    3. Desde backend, cambiar estado del pedido a "preparing"
+    4. Verificar que frontend recibe evento `order.preparing`
+    5. Verificar que se muestra modal informativo en UI
+    6. Cambiar estado del pedido a "ready"
+    7. Verificar que frontend recibe evento `order.ready`
+    8. Verificar que se muestra modal "Ready for Pickup" con botón "Add Review"
+*   **Resultado Esperado:**
+    - Conexión SSE establecida exitosamente
+    - Eventos recibidos en tiempo real (< 1 segundo)
+    - Modales se muestran automáticamente según el evento
+    - Estado del pedido se actualiza en UI sin refresh manual
+*   **Estado:** ✅ VALIDADO (2025-12-18)
+
+---
+
+**✅ TC-MEJORA-003: Flujo Completo de Reseñas**
+
+*   **Historia Relacionada:** US-022
+*   **Descripción:** Verificar que el cliente puede agregar una reseña cuando el pedido está en estado "ready".
+*   **Precondiciones:**
+    1. Pedido existe con estado `ready` en Order Service
+    2. Review Service está corriendo en puerto 3004
+    3. API Gateway tiene rutas `/reviews` configuradas
+*   **Pasos de Prueba:**
+    1. Cliente navega a página de estado del pedido
+    2. Verificar que pedido muestra estado "Ready for Pickup"
+    3. Click en botón "Add Review" en el modal de "Ready"
+    4. Verificar que se abre `ReviewModal`
+    5. Completar formulario: rating (1-5), comentario (max 280 chars)
+    6. Submit reseña
+    7. Verificar POST request a `/reviews` con status 200
+    8. Verificar que reseña se guarda con estado "pending"
+*   **Resultado Esperado:**
+    - Modal de reseñas solo se muestra si `order.status === 'ready' || 'delivered'`
+    - Formulario valida campos correctamente
+    - Reseña se envía exitosamente a Review Service
+    - Sanitización de comentario aplicada (sin scripts)
+    - Usuario recibe confirmación visual de éxito
+*   **Estado:** ✅ VALIDADO (2025-12-18)
+*   **Nota:** Problema previo resuelto: Reseñas no funcionaban porque Order Service no sincronizaba estados correctamente.
+
+---
+
+**✅ TC-MEJORA-004: Timeline de Estados Dinámico**
+
+*   **Historia Relacionada:** US-006, US-007, US-008
+*   **Descripción:** Verificar que los iconos del timeline en OrderStatus se actualizan correctamente según el estado real del pedido.
+*   **Precondiciones:**
+    1. OrderStatus.jsx actualizado con lógica de estados condicionales
+*   **Pasos de Prueba:**
+    1. Crear pedido nuevo (estado `pending`)
+    2. Verificar en UI:
+       - Paso 1 "Received": Activo (icono `receipt_long`)
+       - Paso 2 "Being Prepared": Inactivo (gris)
+       - Paso 3 "Ready": Inactivo (gris)
+    3. Marcar pedido como "preparing" desde Kitchen
+    4. Verificar en UI:
+       - Paso 1 "Received": Activo con `check`
+       - Paso 2 "Being Prepared": Activo con animación ping (icono `soup_kitchen`)
+       - Paso 3 "Ready": Inactivo
+    5. Marcar pedido como "ready" desde Kitchen
+    6. Verificar en UI:
+       - Paso 1 "Received": Activo con `check`
+       - Paso 2 "Being Prepared": Activo con `check`
+       - Paso 3 "Ready": Activo (icono `check`)
+*   **Resultado Esperado:**
+    - Estados visuales alineados con estados reales del backend
+    - `isReceived` = true cuando status >= 'pending'
+    - `isBeingPrepared` = true cuando status >= 'preparing'
+    - `isReadyForPickup` = true cuando status >= 'ready'
+    - No más iconos hardcoded siempre activos
+*   **Estado:** ✅ VALIDADO (2025-12-18)
+
+---
+
+**✅ TC-MEJORA-005: Manejo de Errores en API Gateway**
+
+*   **Historia Relacionada:** US-039
+*   **Descripción:** Verificar que el API Gateway maneja errores correctamente y retorna mensajes descriptivos.
+*   **Precondiciones:**
+    1. API Gateway configurado con try-catch en todas las rutas
+*   **Pasos de Prueba:**
+    1. Intentar crear reseña con orderId inválido
+    2. Verificar respuesta 404 o 400 con mensaje claro
+    3. Intentar acceder a endpoint cuando Review Service está caído
+    4. Verificar respuesta 500 con mensaje "Error al crear reseña"
+    5. Verificar logs en consola del API Gateway con mensajes descriptivos
+*   **Resultado Esperado:**
+    - Errores capturados en bloques try-catch
+    - Respuestas con formato consistente: `{ success: false, message: "..." }`
+    - Status codes apropiados (400, 404, 500)
+    - Logs claros que facilitan debugging
+*   **Estado:** ✅ VALIDADO (2025-12-18)
+
+---
+
+**✅ TC-MEJORA-006: Consumers de RabbitMQ Activos**
+
+*   **Historia Relacionada:** US-035
+*   **Descripción:** Verificar que Order Service se suscribe correctamente a eventos de RabbitMQ al iniciar.
+*   **Precondiciones:**
+    1. RabbitMQ está corriendo
+    2. Order Service reiniciado recientemente
+*   **Pasos de Prueba:**
+    1. Revisar logs de Order Service al iniciar
+    2. Verificar mensaje: "📥 RabbitMQ conectado - Consumiendo eventos: order.preparing, order.ready"
+    3. Publicar evento `order.preparing` manualmente vía RabbitMQ Management
+    4. Verificar que Order Service procesa el evento y actualiza el pedido
+    5. Verificar logs: "👨‍🍳 Actualizando estado del pedido {id} a PREPARING"
+*   **Resultado Esperado:**
+    - Consumers se suscriben al inicio del servicio
+    - Eventos se procesan correctamente
+    - Pedidos se actualizan en MongoDB
+    - Logs indican procesamiento exitoso
+*   **Estado:** ✅ VALIDADO (2025-12-18)
+*   **Nota:** Problema resuelto: Order Service no estaba consumiendo eventos → Requirió reinicio con `docker-compose restart order-service`
+
+---
 
 **4. Casos de Prueba Específicos**
 
